@@ -1,5 +1,5 @@
 # toggl-task-track
-Keep track of time that a set of lights are turned on from query if ISY and record int toggl track. 
+Keep track of time that a set of lights are turned on by querying my home automation system (Universal Devices ISY). Record time in  toggl track. 
 
 This python script detects the change of status of "lights on" or "lights off" in my workshop.   When lights are turned on, a time tracker in my toggl.com account is initiated.  When lights are turned off, the current time tracker at toggl is stopped. 
 
