@@ -22,10 +22,11 @@ shop_lights_status_file = os.getenv("SHOP_LIGHTS_STATUS_FILE") # string file loc
 
 
 # Default status.  Will check ISY below and reset if on.
-shopLightsOn = "off"
+shop_lights_on = False
+prior_shop_lights_on = False
 # Get prior status - shop_lights_status_file will have one of two words:  on|off
-file = open(shop_lights_status_file)
-priorShopLightsOn = file.read()
+with open(shop_lights_status_file) as f:
+    prior_shop_lights_on = f.read() == "on"
 
 # local address for the ISY device is kept in /etc/hosts
 ISYaddr = "http://isy"
@@ -69,23 +70,23 @@ for node in root:
             if int(status) > 0 and name == "Shop 2":
                 onCount = onCount + 1
             if onCount > 1:
-                shopLightsOn = "on"
+                shop_lights_on = "on"
         except Exception as e:
             print(str(e))
             print(property[0].attrib)
             templateError = str(e)
 
-print("current", shopLightsOn)
-print("prior", priorShopLightsOn)
+print("current", shop_lights_on)
+print("prior", prior_shop_lights_on)
 
 # Store shop lights status for toggle comparison next time
-file = open(shop_lights_status_file, "w")
-file.write(shopLightsOn)
-file.close()
+with open(shop_lights_status_file, "w") as f:
+    f.write("on") if shop_lights_on else f.write("off")
+
 
 # Finally, start or stop a Toggl time entry if the shop lights status has changed. 
 
-if shopLightsOn == "on" and priorShopLightsOn == "off":
+if shop_lights_on and not prior_shop_lights_on:
     # Create Toggl time entry
     dt = datetime.utcnow()
     dt = dt.replace(microsecond=0)
@@ -116,7 +117,7 @@ if shopLightsOn == "on" and priorShopLightsOn == "off":
         },
     )
     print(data.json())
-if shopLightsOn == "off" and priorShopLightsOn == "on":
+if  not shop_lights_on and prior_shop_lights_on:
     # Get current Time entry
     data = requests.get(
         "https://api.track.toggl.com/api/v9/me/time_entries/current",
