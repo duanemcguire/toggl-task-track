@@ -19,6 +19,7 @@ toggl_pass = os.getenv("TOGGL_PASS")
 toggl_workspace = int(os.getenv("TOGGL_WORKSPACE")) #  integer workspace id at toggl.com
 toggl_shop_general = int(os.getenv("TOGGL_SHOP_GENERAL")) # integer project_id for my "shop general" project
 shop_lights_status_file = os.getenv("SHOP_LIGHTS_STATUS_FILE") # string file location of status file
+toggl_api_url = "https://api.track.toggl.com/api/v9"
 
 
 # Default status.  Will check ISY below and reset if on.
@@ -51,9 +52,9 @@ for node in root:
             name = node.findall("name")[0].text
             status = node.findall("property")[0].attrib.get("value")
             if int(status) > 0 and name == "Shop 1":
-                on_count = on_count + 1
+                on_count += 1
             if int(status) > 0 and name == "Shop 2":
-                on_count = on_count + 1
+                on_count +=  1
             if on_count > 1:
                 shop_lights_on = True
         except Exception as e:
@@ -92,12 +93,13 @@ if shop_lights_on and not prior_shop_lights_on:
     }
 
     url = "/".join((
-        "https://api.track.toggl.com/api/v9/workspaces",
+        toggl_api_url,
+        "workspaces",
         str(toggl_workspace),
         "time_entries"
     ))
     
-    data = requests.post(
+    requests.post(
         url, 
         json=j, 
         auth=(toggl_user,toggl_pass) 
@@ -106,22 +108,23 @@ if shop_lights_on and not prior_shop_lights_on:
 if  not shop_lights_on and prior_shop_lights_on:
     # Get current Time entry
     data = requests.get(
-        "https://api.track.toggl.com/api/v9/me/time_entries/current",
-         auth=(toggl_user,toggl_pass) 
+        toggl_api_url + "/me/time_entries/current",
+        auth=(toggl_user,toggl_pass) 
     )
     jdata = data.json()
     if len(jdata) :
         workspace = jdata["workspace_id"]
         time_id = jdata["id"]
         url = "/".join((
-            "https://api.track.toggl.com/api/v9/workspaces",
+            toggl_api_url,
+            "workspaces",
             str(toggl_workspace),
             "time_entries",
             str(time_id),
             "stop"
         ))  
         # Stop current Time entry
-        data = requests.patch(
+        requests.patch(
             url,
             auth=(toggl_user,toggl_pass)
         )
